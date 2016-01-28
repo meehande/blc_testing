@@ -15,6 +15,15 @@ def numel(lis):
   sum(len(x) for x in lis)
 '''
 
+"""
+To Do:
+**put lambda from p in ls
+-make lambda fit dimension wise - r in range(p) now?
+-lambda = mxp
+-as a diagonal it is pxp (used when multiplying)
+-does r, u, v have p in their dimension? (ie rn p = n but change to p everywhere?)
+"""
+
 def ls(R,Rsampled,W,d,L,tolerance,maxiter, Lambda): # **create Lambda from P, **check L implementation L[g] **do not use python lists! Move to numpy for W and L!!
   # BLC
   (n,m) = R.shape

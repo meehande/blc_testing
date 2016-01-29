@@ -7,7 +7,7 @@ Created on Mon Jan 25 21:41:15 2016
 import numpy as np
 import unittest
 
-def createLambda(P, R):
+def createLambda2(P, R):
     n,m = R.shape
     p,n = P.shape
     Lambda = np.zeros((m,p))
@@ -35,21 +35,45 @@ def createP(p, n):
         P[group, user] = 1
     return P
 """
-Issues:
-P is not always giving one group per user
-Test is generating n = 20? - even though lambda is getting the right dimension
-Pu didn't delete first column
-delta_v is not coming out as a diagonal matrix - should it definitely be? I think so
-"""    
+ ISSUES:
+ Lambda should use L/W instead of R... makes sense (see matlab code)
+"""
+"""
+This is not giving the same result as the above function 
+- not consistently #of users per group all the time and I don't know why yet
+"""
+def createLambda(P,L,W):
+    p,n = P.shape
+    m = len(L)
+    #L = m lists (column-wise through R) - for each item, who has rated it
+    #W = n lists (row-wise through R) - for each user, what items have they rated
+    Lambda = np.zeros((m,p))
+    
+    for item in xrange(m):
+        Pu = np.empty(p)
+        print "item ", item
+        for user in xrange(n):
+            print "user ", user
+            if(item in W[user]):#has this user rated this item
+                Pu = np.c_[Pu, P[:,user]]
+        Pu = np.delete(Pu,0,1)
+        delta_v = np.dot(Pu, Pu.T) #compute delta as P.P^T for each item - pxp
+        lam_v = []
+        for row in xrange(p): 
+            lam_v.append(sum(delta_v[row,:]))#1xp
+        Lambda[item,:]=lam_v
+    #convert list of lists to matrix
+    #Lambda = np.array([np.array(li) for li in Lambda])
+    return Lambda
+        
+            
+             
+     
 
 
 ##################
 """
 TO DO:
-**Finish Test
-**Put into ls
-**Test in blc
-**createP 
 **run some performance tests
 """
 

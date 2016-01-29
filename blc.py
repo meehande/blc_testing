@@ -30,7 +30,7 @@ def ls(R,Rsampled,W,d,L,tolerance,maxiter, Lambda): # **create Lambda from P, **
   sigma = np.finfo(float).eps
   Id = np.identity(d)
   
-  Lambda=np.ones((m,n));  # this is m x n (large ?), item in row i col g is \Delta(i)_gg  **remove this and use P to compute Lambda HUGE
+ # Lambda=np.ones((m,n));  # this is m x n (large ?), item in row i col g is \Delta(i)_gg  **remove this and use P to compute Lambda HUGE
   
   V = np.random.normal(size=(d, m))
   U = np.random.normal(size=(d, n))  # no point in initialising U as we're going to immediately update it. Not really: in case of ill conditioned matrix we may get an error because we won't chang some values for some iterations.....
@@ -122,10 +122,10 @@ def sampleR(R,density):
   L=[]
   missingW = []
   missingL = []
-  for j in xrange(m):
+  for j in xrange(m):#for each column in R add a list to L
     L.append([]) 
     missingL.append([])
-  for i in xrange(n):
+  for i in xrange(n):#for each row in R add a list to W
     W.append([])
     missingW.append([])
     for j in xrange(m):
@@ -156,10 +156,10 @@ def createLambda(P, R):
         lam_v = []
         for row in xrange(p): 
             lam_v.append(sum(delta_v[row,:]))#1xp
-        Lambda[item,:]=lam_v
+        Lambda[item,:]=lam_v 
         #convert list of lists to matrix
     #Lambda = np.array([np.array(li) for li in Lambda])
-    return Lambda
+    return Lambda #mxp
     
 def createP(p, n):
     P = np.zeros((p,n))
@@ -185,7 +185,7 @@ class TestBLC(unittest.TestCase):
   def accuracy(self,n,m,d,p):
      R = createR(n,m,d)  # generate random user-item rating matrix
      (W,L,Rsampled,Rmissed) = sampleR(R,1)  # sample from it **rho
-     P = createP(p,n)
+     P = createP(n,n)
      Lambda = createLambda(P,Rsampled)
      (U,V,mem) = ls(R,Rsampled,W,d,L,0.0000001,10, Lambda) # factorize
      e = rms(Rmissed,U,V)

@@ -48,13 +48,16 @@ for i in xrange(start,1):
         for d in [2]:#xrange(2,10,2):
           R = blc.createR(n,m,d)  # generate random user-item rating matrix
           (W,L,Rsampled,Rmissing) = blc.sampleR(R,rho)
+          P = blc.createP(n,n)
+          Lambda = blc.createLambda(P,Rsampled)
           r = oc.minimal_als('R',Rsampled,'d',d,'maxiter',10,'fast',1,'octave',1,'p',n)
           oct_err = blc.rms(Rmissing,r.U,r.V)
           print('Iteration number',i,'n',n,'m',m,'rho',rho)
           print('r.time',r.tim)
           print('oct_err',oct_err)
           start_time = timeit.default_timer()
-          (U,V, mem) = blc.ls(R,Rsampled,W,d,L,0.0001,10)#should this be R_sampled??
+          
+          (U,V, mem) = blc.ls(R,Rsampled,W,d,L,0.0001,10,Lambda)#should this be R_sampled??
           run_time = timeit.default_timer()-start_time      
           blc_err = blc.rms(Rmissing,U,V)
           print('run time', run_time)
@@ -79,9 +82,9 @@ results[results['error']>1e-10].sort_values(by=['n'])
  # worst error and sorted by n
 results.sort_values(by=['time'])
 results.plot(x='n',y=['mem','octave mem']) #http://pandas.pydata.org/pandas-docs/stable/visualization.html
-results[(results['m'].isin([8])) & (results['d'].isin([2])) & (results['density'].isin([0.9]))].plot(x='n',y=['mem','octave mem','python mem'],logy=True)
-results[(results['m'].isin([8])) & (results['d'].isin([2])) & (results['density'].isin([0.9]))].plot(x='n',y=['time','octave time'],logy=True)
-results[(results['m'].isin([8])) & (results['d'].isin([2])) & (results['density'].isin([0.9]))].plot(x='n',y=['error','octave error'],logy=True)
+results[(results['m'].isin([8])) & (results['d'].isin([2])) & (results['density'].isin([0.8]))].plot(x='n',y=['mem','octave mem','python mem'],logy=True)
+results[(results['m'].isin([8])) & (results['d'].isin([2])) & (results['density'].isin([0.8]))].plot(x='n',y=['time','octave time'],logy=True)
+results[(results['m'].isin([8])) & (results['d'].isin([2])) & (results['density'].isin([0.8]))].plot(x='n',y=['error','octave error'],logy=True)
 results.boxplot(column=['time','octave time'],by=['n'])
 results.boxplot(column=['mem','octave mem'],by=['n'])
 results.boxplot(column=['time','octave time'],by=['m'])

@@ -44,7 +44,8 @@ def ls(R,Rsampled,W,d,L,tolerance,maxiter, Lambda): # **create Lambda from P, **
         Vg = V[:,W[g]]  # this is d x m
         Lg = Lambda[W[g],g]  # this is m x n, if n is #groups its small-ish
         VV = np.dot(np.dot(Vg,np.diag(Lg)),Vg.T)  # this is d x d i.e. small
-        Z = R[g,W[g]]*Lg  # this is 1 x m - element wise multiplication
+        Z = R[g,W[g]]*Lg  # this is 1 x m - element wise multiplication - this is supposed to represent Rtilde?? - it doesn;t though...
+#if Z = rtilde **need to make Lg divide R[g,:] by #users per group - element wise inversion        
         try:
           U[:,g] = np.linalg.lstsq(sigma*Id+VV,np.dot(Vg,Z))[0] # dx1
         #U[:,g] = np.dot(np.dot(Vg,Z),np.linalg.pinv(sigma*Id+VV))

@@ -6,16 +6,23 @@ Created on Mon Jan 25 21:41:15 2016
 """
 import numpy as np
 import unittest
+"""
+TO DO:
+**Get rid of second loop
+**Use W/L to increase efficiency in following algs
+"""
 
 def createLambda2(P, R):
     n,m = R.shape
     p,n = P.shape
     Lambda = np.zeros((m,p))
-    
+    L = []
+    W = []
     for item in xrange(m):
         Pu = np.zeros(p)#initialise this to fit next calc
         #need to test that any ratings exist in row first -- because bug found where it broke for unrated item!!
-        if(sum(R[:,item]) != 0): """ are unrated items zero or NaN?! """ 
+        if(sum(R[:,item]) != 0):#if item has been rated by anyone
+            """ are unrated items zero or NaN?! """ 
             for user in xrange(n):#**try get rid of nested loops!
                 if(R[user, item] != 0):#if user has rated this item
                     Pu = np.c_[Pu,P[:,user]]#append the column from P for that user
@@ -23,7 +30,7 @@ def createLambda2(P, R):
             delta_v = np.dot(Pu, Pu.T) #compute delta as P.P^T for each item - pxp
             lam_v = []
             for row in xrange(p): 
-                lam_v.append(sum(delta_v[row,:]))#1xp
+                lam_v.append(sum(delta_v[row,:]))#1xp                   
             Lambda[item,:]=lam_v
         else: #if item is unrated by anyone!
             Lambda[item, :] = np.zeros(p)
@@ -39,7 +46,7 @@ def createP(p, n):
         P[group, user] = 1
     return P
     
-def updateP(R, P, W, L):
+def createRtilde(R, P, W, L):
     #W, L are like existing values in matlab implementation
     p,n = P.shape
     n,m = R.shape
@@ -56,9 +63,22 @@ def updateP(R, P, W, L):
         invLambda = np.diag(Lambda[item, :])#make diagonal of #users per group who rated item
         invLambda[invLambda>0] = 1/invLambda[invLambda>0]
         Rtilde[:,item] = np.dot(invLambda,Rhat[:,item])
-    return Rtilde#Rtilde = pxm aggregation of R for each user
+    return Rtilde#Rtilde = pxm aggregation of R for each user = pxm
     
-    
+def indexExistingValues(Lambda):
+    m,p = Lambda.shape
+    Wtilde = [] # for each group, items rated - p lists
+    Ltilde = [] # for each item, group who rated it - m lists 
+    #Lambda = mxp = #users in group p rating item m - find zero elements!
+    for j in xrange(m):
+        Ltilde.append([])
+    for i in xrange(p):#for each group - column of Lambda
+        Wtilde.append([])
+        for j in xrange(m):#for each item - row of Lambda
+            if(Lambda[j,i]!=0):#if item j has been given rating by group i
+                Wtilde[i].append(j)
+                Ltilde[j].append(i)
+    return Wtilde, Ltilde
 """
  TO DO:
  relate existingvalues to W/L
@@ -100,7 +120,55 @@ def createLambda(P,L,W):
     return Lambda
         
             
-             
+def ls_groups(R,Rtilde,W,d,L,tolerance,maxiter, Lambda): 
+  import blc
+  (n,m) = R.shape
+  p,m = Rtilde.shape
+  sigma = np.finfo(float).eps
+  Id = np.identity(d)
+   
+  V = np.random.normal(size=(d, m))
+  U = np.random.normal(size=(d, p))  # no point in initialising U as we're going to immediately update it. Not really: in case of ill conditioned matrix we may get an error because we won't chang some values for some iterations.....
+  err = tolerance+1 #initialise to value > tolerance
+  it = 0
+  while((err>tolerance) & (it<maxiter)):  
+    for g in xrange(p):#group by group
+      if W[g]:     # check whether group is used (a row of R may be zero)  
+        Vg = V[:,W[g]]  # this is d x m
+        Lg = Lambda[W[g],g]  # this is m x p, if p is #groups its small-ish
+        VV = np.dot(np.dot(Vg,np.diag(Lg)),Vg.T)  # this is d x d i.e. small
+        Z = Rtilde[g,W[g]]*Lg  # this is 1 x m - element wise multiplication - Rtilde = pxm
+#Rtilde = avg rating of item m by group p      
+        try:
+          U[:,g] = np.linalg.lstsq(sigma*Id+VV,np.dot(Vg,Z))[0] # dx1
+        #U[:,g] = np.dot(np.dot(Vg,Z),np.linalg.pinv(sigma*Id+VV))
+        except:
+          print('Ill conditioned matrix, fix that please in some way..')
+        #V = V + np.random.normal(size=(d, m))
+        
+    for v in xrange(m): # **add if check whether v is observed (a column of R may be zero)
+      #pdb.set_trace()
+      if L[v]:
+        Lv = np.diag(Lambda[v,L[v]])  # this is n x n, ok if n is #groups and small-ish **either this has to be made sparse or find another way... HUGE
+        Uv = U[:,L[v]]  # this is d x n
+        t1 = np.dot(Uv,np.dot(Lv,Uv.T)) + sigma*Id  # this is d x d
+        t2 = np.dot(Uv,np.dot(Lv,Rtilde[L[v],v]))  # RH multiply gives n x 1, LH d x 1
+        try:
+          V[:,v] = np.linalg.lstsq(t1, t2)[0]
+          #V[:,v] = np.dot(t2,np.linalg.pinv(t1))
+        except:
+          print('Ill conditioned matrix, fix that please in some way..')
+          #pdb.set_trace()
+          #U = U + np.random.normal(size=(d, n))
+    err -= blc.rms(Rtilde, U, V)
+    print "iteration: ", it, "error ", err 
+    it +=1
+# ** use np.sqrt(np.sum( (np.dot(U.T,V)-R)**2 )/numel(W))
+#  tempmem = locals()
+#  mem = sys.getsizeof(tempmem) 
+ # mem = U.nbytes+V.nbytes+Lambda.nbytes+Id.nbytes+Vg.nbytes+Lg.nbytes+VV.nbytes+Z.nbytes+Lv.nbytes+Uv.nbytes+t1.nbytes+t2.nbytes+sys.getsizeof(L)+sys.getsizeof([W])
+  #print(U.nbytes,V.nbytes,Lambda.nbytes,Id.nbytes,Vg.nbytes,Lg.nbytes,VV.nbytes,Z.nbytes,Lv.nbytes,Uv.nbytes,t1.nbytes,t2.nbytes,sys.getsizeof(L),sys.getsizeof([W]))
+  return (U,V)             
      
 
 

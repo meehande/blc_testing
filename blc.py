@@ -141,32 +141,14 @@ def sampleR(R,density):
  # totalsampled = np.sum(np.isfinite(Rsampled))
   #pdb.set_trace()
   return (W,L,Rsampled,Rmissing)
-   
-def createLambda(P, R):
+       
+def createLambda(P,R):
     n,m = R.shape
     p,n = P.shape
+    a = R>0
     Lambda = np.zeros((m,p))
-    
-    for item in xrange(m):
-        Pu = np.zeros(p)#initialise this to fit next calc
-        #need to test that any ratings exist in row first -- because bug found where it broke for unrated item!!
-        if(sum(R[:,item]) != 0):
-        
-            """ are unrated items zero or NaN?! """ 
-            for user in xrange(n):#**try get rid of nested loops!
-                if(R[user, item] != 0):#if user has rated this item
-                #if((np.isnan(R[user, item])) == False):
-                    Pu = np.c_[Pu,P[:,user]]#append the column from P for that user
-            Pu = np.delete(Pu,0,1)#get rid of initial col of P - used to initialise variable
-            delta_v = np.dot(Pu, Pu.T) #compute delta as P.P^T for each item - pxp
-            lam_v = []
-            for row in xrange(p): 
-                lam_v.append(sum(delta_v[row,:]))#1xp
-            Lambda[item,:]=lam_v
-        else: #if item is unrated by anyone!
-            Lambda[item, :] = np.zeros(p)
-        #convert list of lists to matrix
-    #Lambda = np.array([np.array(li) for li in Lambda])
+    for i in xrange(m):
+        Lambda[i,:]= P[:,a[:,i]].sum(axis=1)
     return Lambda
 
 def createP(p, n):
@@ -294,11 +276,14 @@ class TestBLC(unittest.TestCase):
      print "ls_groups\n", np.dot(Ut.T, Vt)
      print "ls\n", np.dot(U.T, V)
      e = rms(R,U,V)
-     self.assertTrue(e<1e-3,'Accuracy is '+ str(e)) # is solution accurate ? ** change this: it shouldn't fail if accuracy is low (or remove it)
+     e_groups = rms(Rtilde,Ut,Vt)
+     print "error is: ", e
+     print "group error is: ", e_groups     
+    # self.assertTrue(e<1e-3,'Accuracy is '+ str(e)) # is solution accurate ? ** change this: it shouldn't fail if accuracy is low (or remove it)
 
   def test_accuracy(self):
      for i in xrange(4): # try for 10 different random R matrices
-        self.accuracy(10,15,3,16)
+        self.accuracy(4,5,2,3)
 
 ############################
 if __name__ == '__main__':

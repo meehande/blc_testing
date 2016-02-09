@@ -62,12 +62,12 @@ for i in xrange(start,1):
           blc_err = blc.rms(Rmissing,U,V)
           print('run time', run_time)
           print('blcerr',blc_err)         
-  #        python_mem = memory_usage((blc.ls, (R,Rsampled,W,d,L,10)),max_usage=True)[0]*1.049e+6  # this is the total memory used 
+          python_mem = memory_usage((blc.ls, (R,Rsampled,W,d,L,0.0001,10,Lambda)),max_usage=True)[0]*1.049e+6  # this is the total memory used 
           print(mem/1048576.0) # this is the memory in Mbytes of the variables we decided to measure
           print('-----------')
-   #       results = results.append(pd.DataFrame({'density':rho,'n':n,'m':m,'d':d,'mem':mem,'time':run_time,'octave mem':r.mem,'octave time':r.tim,'error':blc_err,'octave error':oct_err,'python mem':python_mem},index=[0]),ignore_index=True)
-  #results.to_pickle('results.pkl')
-  print 'here'
+          results = results.append(pd.DataFrame({'density':rho,'n':n,'m':m,'d':d,'mem':mem,'time':run_time,'octave mem':r.mem,'octave time':r.tim,'error':blc_err,'octave error':oct_err,'python mem':python_mem},index=[0]),ignore_index=True)
+  results.to_pickle('results.pkl')
+  #print 'here'
   with open('status.pkl', 'w') as f:
     pickle.dump(i+1, f)
   #f = open('iteration', 'w')

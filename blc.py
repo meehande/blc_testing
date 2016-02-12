@@ -74,6 +74,9 @@ def ls(R,Rsampled,W,d,L,tolerance,maxiter, Lambda): # **create Lambda from P, **
   #print(U.nbytes,V.nbytes,Lambda.nbytes,Id.nbytes,Vg.nbytes,Lg.nbytes,VV.nbytes,Z.nbytes,Lv.nbytes,Uv.nbytes,t1.nbytes,t2.nbytes,sys.getsizeof(L),sys.getsizeof([W]))
   return (U,V,mem)
 
+"""
+Netflix recommneder matrix factorization - no groups/privacy
+"""
 def ls2(R,W,d,L):
   # netflix baseline
   (n,m) = R.shape
@@ -140,7 +143,8 @@ def sampleR(R,density):
         Rmissing[i,j] = R[i,j]
  # totalsampled = np.sum(np.isfinite(Rsampled))
   #pdb.set_trace()
-  return (W,L,Rsampled,Rmissing)
+  a = Rsampled>0      
+  return (W,L,Rsampled,Rmissing, a)
        
 def createLambda(P,R):
     n,m = R.shape
@@ -193,7 +197,7 @@ def indexExistingValues(Lambda):
                 Ltilde[j].append(i)
     return Wtilde, Ltilde
 
-def ls_groups(Rtilde,W,d,L,tolerance,maxiter, Lambda): 
+def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a): 
   #(n,m) = R.shape
   p,m = Rtilde.shape
   sigma = np.finfo(float).eps
@@ -205,11 +209,12 @@ def ls_groups(Rtilde,W,d,L,tolerance,maxiter, Lambda):
   it = 0
   while((err>tolerance) & (it<maxiter)):  
     for g in xrange(p):#group by group
-      if W[g]:     # check whether group is used (a row of R may be zero)  
-        Vg = V[:,W[g]]  # this is d x m
-        Lg = Lambda[W[g],g]  # this is m x p, if p is #groups its small-ish
+      if a[:,g].any():
+      #if W[g]:     # check whether group is used (a row of R may be zero)              
+        Vg = V[:,a[:,g]]  # this is d x m
+        Lg = Lambda[a[:,g],g]  # this is m x p, if p is #groups its small-ish
         VV = np.dot(np.dot(Vg,np.diag(Lg)),Vg.T)  # this is d x d i.e. small
-        Z = Rtilde[g,W[g]]*Lg  # this is 1 x m - element wise multiplication - Rtilde = pxm
+        Z = Rtilde[g,a[:,g]]*Lg  # this is 1 x m - element wise multiplication - Rtilde = pxm
 #Rtilde = avg rating of item m by group p      
         try:
           U[:,g] = np.linalg.lstsq(sigma*Id+VV,np.dot(Vg,Z))[0] # dx1
@@ -220,11 +225,12 @@ def ls_groups(Rtilde,W,d,L,tolerance,maxiter, Lambda):
         
     for v in xrange(m): # **add if check whether v is observed (a column of R may be zero)
       #pdb.set_trace()
-      if L[v]:
-        Lv = np.diag(Lambda[v,L[v]])  # this is n x n, ok if n is #groups and small-ish **either this has to be made sparse or find another way... HUGE
-        Uv = U[:,L[v]]  # this is d x n
+      #if L[v]:
+      if a[v, :].any():
+        Lv = np.diag(Lambda[v,a[v, :]])  # this is n x n, ok if n is #groups and small-ish **either this has to be made sparse or find another way... HUGE
+        Uv = U[:,a[v, :]]  # this is d x n
         t1 = np.dot(Uv,np.dot(Lv,Uv.T)) + sigma*Id  # this is d x d
-        t2 = np.dot(Uv,np.dot(Lv,Rtilde[L[v],v]))  # RH multiply gives n x 1, LH d x 1
+        t2 = np.dot(Uv,np.dot(Lv,Rtilde[a[v, :],v]))  # RH multiply gives n x 1, LH d x 1
         try:
           V[:,v] = np.linalg.lstsq(t1, t2)[0]
           #V[:,v] = np.dot(t2,np.linalg.pinv(t1))
@@ -237,7 +243,7 @@ def ls_groups(Rtilde,W,d,L,tolerance,maxiter, Lambda):
 # ** use np.sqrt(np.sum( (np.dot(U.T,V)-R)**2 )/numel(W))
 #  tempmem = locals()
 #  mem = sys.getsizeof(tempmem) 
-  mem = U.nbytes+V.nbytes+Lambda.nbytes+Id.nbytes+Vg.nbytes+Lg.nbytes+VV.nbytes+Z.nbytes+Lv.nbytes+Uv.nbytes+t1.nbytes+t2.nbytes+sys.getsizeof(L)+sys.getsizeof([W])
+  mem = U.nbytes+V.nbytes+Lambda.nbytes+Id.nbytes+Vg.nbytes+Lg.nbytes+VV.nbytes+Z.nbytes+Lv.nbytes+Uv.nbytes+t1.nbytes+t2.nbytes+a.nbytes
   #print(U.nbytes,V.nbytes,Lambda.nbytes,Id.nbytes,Vg.nbytes,Lg.nbytes,VV.nbytes,Z.nbytes,Lv.nbytes,Uv.nbytes,t1.nbytes,t2.nbytes,sys.getsizeof(L),sys.getsizeof([W]))
   return (U,V, mem)    
 
@@ -259,13 +265,14 @@ class TestBLC(unittest.TestCase):
 
   def accuracy(self,n,m,d,p):
      R = createR(n,m,d)  # generate random user-item rating matrix
-     (W,L,Rsampled,Rmissed) = sampleR(R,0.3)  # sample from it **rho
+     (W,L,Rsampled,Rmissed, a) = sampleR(R,0.3)  # sample from it **rho
      P = createP(p,n)
      Lambda = createLambda(P,Rsampled)
      Rtilde = createRtilde(Rsampled,P)
+     a = Lambda>0
      (U,V,mem) = ls(R,Rsampled,W,d,L,0.0000001,10, Lambda) # factorize
-     Wt, Lt = indexExistingValues(Lambda)
-     Ut, Vt, memt = ls_groups(Rtilde, Wt, d, Lt, 0.0000001,10, Lambda)
+     #Wt, Lt = indexExistingValues(Lambda)
+     Ut, Vt, memt = ls_groups(Rtilde, d, 0.0000001,10, Lambda,a)
      print "R\n", R
      print "Rsampled\n", Rsampled
      print "P\n", P
@@ -275,6 +282,8 @@ class TestBLC(unittest.TestCase):
      print "Vtilde\n", Vt
      print "ls_groups\n", np.dot(Ut.T, Vt)
      print "ls\n", np.dot(U.T, V)
+     #factorization error - compare elements of R_sampled - R_tilde
+     #prediction error - compare elements of R_missing - R_tilde'
      e = rms(R,U,V)
      e_groups = rms(Rtilde,Ut,Vt)
      print "error is: ", e
@@ -283,7 +292,7 @@ class TestBLC(unittest.TestCase):
 
   def test_accuracy(self):
      for i in xrange(4): # try for 10 different random R matrices
-        self.accuracy(4,5,2,3)
+        self.accuracy(20,10,3,3)
 
 ############################
 if __name__ == '__main__':

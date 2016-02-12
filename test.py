@@ -55,13 +55,26 @@ for i in xrange(start,1):
           print('Iteration number',i,'n',n,'m',m,'rho',rho)
           print('r.time',r.tim)
           print('oct_err',oct_err)
+          #ls no groups
           start_time = timeit.default_timer()
-          
           (U,V, mem) = blc.ls(R,Rsampled,W,d,L,0.0001,10,Lambda)#should this be R_sampled??
           run_time = timeit.default_timer()-start_time      
           blc_err = blc.rms(Rmissing,U,V)
+          
+          
+          #ls groups
+          Rtilde = blc.createRtilde(Rsampled,P)
+          Rtilde_missed = blc.createRtilde(Rmissing,P)
+          Wt,Lt = blc.indexExistingValues(Lambda)
+          start_time = timeit.default_timer()
+          (Ut, Vt, mem) = blc.ls_groups(Rtilde, Wt, d, Lt, 0.0001,10, Lambda)
+          run_time_groups = timeit.default_timer()-start_time                      
+          blc_err_groups = blc.rms(Rtilde_missed,Ut,Vt)
+          
           print('run time', run_time)
-          print('blcerr',blc_err)         
+          print('blcerr',blc_err) 
+          print('run time groups', run_time_groups)
+          print('blcerr groups', blc_err_groups)
           python_mem = memory_usage((blc.ls, (R,Rsampled,W,d,L,0.0001,10,Lambda)),max_usage=True)[0]*1.049e+6  # this is the total memory used 
           print(mem/1048576.0) # this is the memory in Mbytes of the variables we decided to measure
           print('-----------')

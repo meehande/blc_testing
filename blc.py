@@ -245,7 +245,30 @@ def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a):
 #  mem = sys.getsizeof(tempmem) 
   mem = U.nbytes+V.nbytes+Lambda.nbytes+Id.nbytes+Vg.nbytes+Lg.nbytes+VV.nbytes+Z.nbytes+Lv.nbytes+Uv.nbytes+t1.nbytes+t2.nbytes+a.nbytes
   #print(U.nbytes,V.nbytes,Lambda.nbytes,Id.nbytes,Vg.nbytes,Lg.nbytes,VV.nbytes,Z.nbytes,Lv.nbytes,Uv.nbytes,t1.nbytes,t2.nbytes,sys.getsizeof(L),sys.getsizeof([W]))
-  return (U,V, mem)    
+  return (U,V, mem)  
+  
+
+def train_groups(P, Ut):
+#1.find unused groups and get rid of them
+#2.double number of existing groups
+    groups_used = P.sum(axis = 1)
+    if groups_used.any():
+        P = P[groups_used!=0] #get rid of empty groups
+        Ut = Ut[:,groups_used!=0]
+        Ut = np.hstack((Ut, np.zeros((Ut.shape))))#double Ut - num groups
+        P = np.vstack((P, np.zeros((P.shape))))#double num groups **should we just use createP??
+        
+    return P,Ut
+
+def rFromRtilde(Rt, P, R):
+    #take avg rating of that group for that item?
+    """
+    sth like:
+    for unrated item m by person n:
+    R[n,m] = Rtilde[P[:,n]!=0, m]
+    - select group they are in, give back that avg
+    how to do this without going elementwise??
+    """
 
 
 

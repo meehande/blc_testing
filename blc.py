@@ -270,11 +270,16 @@ def rFromRtilde(Rt, P, R):
     how to do this without going elementwise??
     """
 
-def findP(R, Rtilde, user, a):
-    distance = np.sum(np.square(R[user, a[user, :]] - Rtilde[:,a[user,:]]),2) # column of distance from user to each group
+def findP(R, Rtilde, user, a, P, t):
+    a = R>0
+    distance = np.sum(np.square(R[user, a[user, :]] - Rtilde[:,a[user,:]]),1) # column of distance from user to each group
     perm = np.random.permutation(distance.size) # random permutation of indices in distance
     index = np.argmin(distance[perm])
     index = perm[index]
+    P[:,user] = np.zeros(P.shape[0])
+    P[index, user] = 1
+    #return P
+    
 
 def rms(Rmissing,U,V): # metric on the missing one
   # root mean square prediction error

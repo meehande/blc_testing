@@ -245,19 +245,45 @@ def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a):
 #  mem = sys.getsizeof(tempmem) 
   mem = U.nbytes+V.nbytes+Lambda.nbytes+Id.nbytes+Vg.nbytes+Lg.nbytes+VV.nbytes+Z.nbytes+Lv.nbytes+Uv.nbytes+t1.nbytes+t2.nbytes+a.nbytes
   #print(U.nbytes,V.nbytes,Lambda.nbytes,Id.nbytes,Vg.nbytes,Lg.nbytes,VV.nbytes,Z.nbytes,Lv.nbytes,Uv.nbytes,t1.nbytes,t2.nbytes,sys.getsizeof(L),sys.getsizeof([W]))
-  return (U,V, mem)  
+  return (U,V, mem) 
+  
+"""
+euclidean distance between matrices A, B
+dist = sqrt ( ||A||^2 + ||B||^2 - 2*A.B )
+"""  
+def distance(a,b):
+    aa = np.sum(np.square(a),0)
+    bb = np.sum(np.square(b),0)
+    ab = np.dot(a.T,b)
+    return np.sqrt(abs(np.column_stack([aa]*bb.shape[0])+np.vstack([bb]*aa.shape[0])-2*ab))
+    
   
 
-def train_groups(P, Ut):
-#1.find unused groups and get rid of them
-#2.double number of existing groups
+def train_groups(P, Ut): # expand tree in matlab code!
+#1.find unused groups and get rid of them - done
+#2.double number of existing groups - 
+#3. update corresponding variables - eg R, Lambda...
+    distgroups = 0.2
+    
     groups_used = P.sum(axis = 1)
     if groups_used.any():
         P = P[groups_used!=0] #get rid of empty groups
         Ut = Ut[:,groups_used!=0]
-        Ut = np.hstack((Ut, np.zeros((Ut.shape))))#double Ut - num groups
-        P = np.vstack((P, np.zeros((P.shape))))#double num groups **should we just use createP??
         
+        #**to do: finish this - tempm and tempk...
+        #validate it works... etc
+    p,n = P.shape # culled P shape needed
+    tempk =  np.triu(distance(Ut,Ut)*(1-np.eye(p)))
+    tempk[tempk==0] = np.inf
+    tempm = tempk.min()
+    if (tempm == np.inf):
+        tempm = 0.1 #degenerate case - only one group - distance would be infinite so fix std deviation val
+        #set values in new groups
+    Ut = np.hstack((Ut, np.zeros((Ut.shape))))#double Ut - num groups
+    P = np.vstack((P, np.zeros((P.shape))))#double num groups **should we just use createP??
+    newd, newp = Ut.shape #shape of ut with groups culled and then doubled
+    for i in range(p,newp):
+        Ut[:,i] = np.random.multivariate_normal(Ut[:,i], (tempm*distgroups)**2/newd*np.eye(newd))
     return P,Ut
 
 def rFromRtilde(Rt, P, R):
@@ -269,15 +295,20 @@ def rFromRtilde(Rt, P, R):
     - select group they are in, give back that avg
     how to do this without going elementwise??
     """
-
-def findP(R, Rtilde, user, a, P, t):
+   
+ 
+"""
+update user's group by seeing which group's ratings
+are closest
+"""
+def findP(R, Rtilde, user, P):
     a = R>0
     distance = np.sum(np.square(R[user, a[user, :]] - Rtilde[:,a[user,:]]),1) # column of distance from user to each group
     perm = np.random.permutation(distance.size) # random permutation of indices in distance
     index = np.argmin(distance[perm])
     index = perm[index]
     P[:,user] = np.zeros(P.shape[0])
-    P[index, user] = 1
+    P[index, user] = 1 #P is passed by reference
     #return P
     
 

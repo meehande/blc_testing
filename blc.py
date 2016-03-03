@@ -179,7 +179,7 @@ def createRtilde(R, P):
         invLambda = np.diag(Lambda[item, :])#make diagonal of #users per group who rated item
         invLambda[invLambda>0] = 1/invLambda[invLambda>0]
         Rtilde[:,item] = np.dot(invLambda,Rhat[:,item])
-    return Rtilde#Rtilde = pxm aggregation of R for each user
+    return Rtilde, Lambda#Rtilde = pxm aggregation of R for each user
     
 
 def indexExistingValues(Lambda):
@@ -330,8 +330,10 @@ class TestBLC(unittest.TestCase):
      R = createR(n,m,d)  # generate random user-item rating matrix
      (W,L,Rsampled,Rmissed, a) = sampleR(R,0.3)  # sample from it **rho
      P = createP(p,n)
-     Lambda = createLambda(P,Rsampled)
-     Rtilde = createRtilde(Rsampled,P)
+    # Lambda = createLambda(P,Rsampled)
+    # print "LAMBDA1\n",Lambda
+     Rtilde, Lambda = createRtilde(Rsampled,P)
+     print "LAMBDA2\n",Lambda
      a = Lambda>0
      (U,V,mem) = ls(R,Rsampled,W,d,L,0.0000001,10, Lambda) # factorize
      #Wt, Lt = indexExistingValues(Lambda)

@@ -31,20 +31,33 @@ Iterate:
 
 """
 TO DO:
-**COLD START
-**CONVERGENCE OF GROUPS & ERROR CHECKS
+COLD START
+CONVERGENCE OF GROUPS & ERROR CHECKS
 **PERFORMANCE MEASURES
-**COMPARE TO MATLAB DIRECTLY - VERIFY IT WORKS CORRECTLY!
+COMPARE TO MATLAB DIRECTLY - VERIFY IT WORKS CORRECTLY!
 """
 
-maxiter_main = 2
-tries = 0
-n_tries = 50
-done = False
+"""GROUP CONVERGENCE:
+    - keep track of what groups have members and which don't - existing_groups_prev
+    - Age the groups each time they don't change
+    - If groups change, reset age and existing_groups_prev
+    - finish alg if groups have converged - met the age set in initial parameters
+"""
+
 n = 15 #num users - initial parameter of R
 m = 10 #num items - initial parameter of R
 d = 2 #latent features
 p = 1 #num groups... start with this - this will be pruned/learned 
+
+maxiter_main = 2
+tries = 0
+n_tries = 50
+group_convergence = 5 #age groups need to reach before convergence met
+existing_groups_prev = np.zeros(p)
+existing_groups_prev.fill(False)
+existing_groups_prev = np.ones((1,p), dtype=bool)
+groups_age = 0
+
 growth_frequency = 10 #num iterations between each group growth step
 R = blc.createR(n,m,d) #really this will be given - this is the recommendation system
 (W,L,Rsampled,Rmissed, a) = blc.sampleR(R,0.3)  #sample to make sparse
@@ -53,7 +66,7 @@ P = blc.createP(p,n) #create initial P - we don't know where users lie so this i
 tolerance = 0.01 #error tolerance to be met for factorisation...
 
 #**make update method that updates all the things each round - ie rtilde, Lambda, R, etc...
-while ( (tries < n_tries) ):#and (not(done)) ):
+while ( (tries < n_tries) or (groups_age < group_convergence) ):
     
     Rtilde, Lambda = blc.createRtilde(Rsampled,P)#avg rating per group for each item - pxm
    # Lambda = blc.createLambda(P,Rsampled)#users per group rating item m - pxm - 
@@ -73,22 +86,20 @@ while ( (tries < n_tries) ):#and (not(done)) ):
     print "Ut\n", Ut
     print "Vt\n", Vt
     print "lambda\n", Lambda
+    print "groups age\n", groups_age
     tries +=1
-"""    
-    
-    for iii in xrange(1,maxiter_main):
-        if done:
-            break
-        aa = 0;
-        for iiii in np.random.permutation(n):
-            aa = aa+1
-            blc.findP(R,Rtilde,iiii, P)#assign each user to groups closest to their ratings
-            if(aa%5): #**placeholder to get things started...
-                blc.train_groups(P,Ut)
-            Ut,Vt, memt = blc.ls_groups(Rtilde, d, tolerance, 10, Lambda, a)
-            blc.createLambda(P,R)
-  """          
+    #group convergence
+    existing_groups = np.sum(a,0) > 0 #find which groups are empty/full
+    if(existing_groups_prev.size == existing_groups.size):
+        if((existing_groups_prev ^ existing_groups).any()): #if they're not the same
+            groups_age = 0
+            existing_groups_prev = existing_groups
+           # print "UPDATING GROUPS"
+    else:
+        groups_age += 1
+        #print "INCREASE GROUP AGE"
         
+    
         
         
         

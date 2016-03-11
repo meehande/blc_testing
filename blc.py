@@ -238,7 +238,7 @@ def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a):
           print('Ill conditioned matrix, fix that please in some way..')
           #pdb.set_trace()
           #U = U + np.random.normal(size=(d, n))
-    err -= rms(Rtilde, U, V)
+    err = rms(Rtilde, U, V)
     it +=1
 # ** use np.sqrt(np.sum( (np.dot(U.T,V)-R)**2 )/numel(W))
 #  tempmem = locals()
@@ -293,7 +293,7 @@ TO TEST FOR GROUP CONVERGENCE
 - LAMBDA = pxm = number of users in each group rating item m (avg made from this many)
 - R = nxm = each user's rating for each item - use standard deviation to spread results
 """
-def RfromRtilde(Rtilde):
+def RfromRtilde(Rtilde, deviation):
     #take avg rating of that group for that item?
     """
     sth like:
@@ -302,7 +302,7 @@ def RfromRtilde(Rtilde):
     - select group they are in, give back that avg
     how to do this without going elementwise??
     """
-    deviation = 0.1
+    #deviation = 0.1
     p,m = Rtilde.shape
     n = p*3 #create number of users > number of groups - arbitrary
     P = createP(p,n)#needed to find num users per group
@@ -310,7 +310,7 @@ def RfromRtilde(Rtilde):
     Lambda = np.zeros((p,m))#pxm
     for row in xrange(p):
         for col in xrange(m): 
-            Lambda[row, col ] = np.random.random_integers(row, groups_used[row])
+            Lambda[row, col ] = np.random.random_integers(0, groups_used[row])
             #create Lambda as random number within range of num people in that group
     R = np.zeros((n,m))
     for group in xrange(p): #set users from each group
@@ -336,14 +336,21 @@ def findP(R, Rtilde, user, P): #**make it work for empty param P given as input
     P[index, user] = 1 #P is passed by reference
     #return P
     
-
-def rms(Rmissing,U,V): # metric on the missing one
+"""
+RMS ERROR 
+- ONLY COMPUTE ON ELEMENTS WHERE NEITHER IS ZERO
+- ZERO ELEMENT MEANS UNRATED!
+"""
+def rms(R,U,V): # metric on the missing one
   # root mean square prediction error
   #print np.dot(U.T,V)-R
-  totalsampled = np.sum(Rmissing!=0)
+  totalsampled = np.sum(R!=0)#number of non zeros - num of actual ratings that exist that we need
+  
   if totalsampled:
       UV = np.dot(U.T,V)
-      e = np.nansum( (UV-Rmissing)**2 )/totalsampled
+      existing = (R!=0) & (UV!=0) #**Q:do we care about zeros in UV?? 
+      totalsampled = np.sum(existing)
+      e = np.sum( (UV[existing]-R[existing])**2 )/totalsampled
   else:
       e = 0
   return np.sqrt(e)

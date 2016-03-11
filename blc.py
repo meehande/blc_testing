@@ -158,7 +158,7 @@ def createLambda(P,R):
 def createP(p, n):
     P = np.zeros((p,n))
     for user in xrange(n):
-        group = np.random.random_integers(0, p-1)
+        group = np.random.random_integers(0, p-1) #returns random num between 0, p-1 inclusive
         P[group, user] = 1
     return P
 
@@ -286,7 +286,14 @@ def train_groups(P, Ut): # expand tree in matlab code!
         Ut[:,i] = np.random.multivariate_normal(Ut[:,i], (tempm*distgroups)**2/newd*np.eye(newd))
     return P,Ut
 
-def rFromRtilde(Rt, P, R):
+"""
+TO TEST FOR GROUP CONVERGENCE
+- GIVE RTILDE, CREATE CORRESPONDING LAMBDA AND THEN FIND R
+- RTILDE = pxm = avg rating by each group for each item
+- LAMBDA = pxm = number of users in each group rating item m (avg made from this many)
+- R = nxm = each user's rating for each item - use standard deviation to spread results
+"""
+def RfromRtilde(Rtilde):
     #take avg rating of that group for that item?
     """
     sth like:
@@ -295,7 +302,25 @@ def rFromRtilde(Rt, P, R):
     - select group they are in, give back that avg
     how to do this without going elementwise??
     """
-   
+    deviation = 0.1
+    p,m = Rtilde.shape
+    n = p*3 #create number of users > number of groups - arbitrary
+    P = createP(p,n)#needed to find num users per group
+    groups_used = P.sum(1)#sum rows to find num users per group - 1xp
+    Lambda = np.zeros((p,m))#pxm
+    for row in xrange(p):
+        for col in xrange(m): 
+            Lambda[row, col ] = np.random.random_integers(row, groups_used[row])
+            #create Lambda as random number within range of num people in that group
+    R = np.zeros((n,m))
+    for group in xrange(p): #set users from each group
+    #select users in specific group - (subset of n) x m
+        for item in xrange(m): #itemwise
+            if(Lambda[group, item]):#only do the calc if the group has rated the item
+                perm = np.random.permutation((np.where(P[group,:]>0)[0]))#select random order of users from group to decide who gets the rating
+                #select random users in the group based on number of ratings for that item in this group 
+                R[perm[[xrange(int(Lambda[group,item]))]], item] = np.random.normal(Rtilde[group, item], deviation)#let it equal the average
+    return R, Lambda, P
  
 """
 update user's group by seeing which group's ratings

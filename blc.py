@@ -243,6 +243,8 @@ def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a):
 # ** use np.sqrt(np.sum( (np.dot(U.T,V)-R)**2 )/numel(W))
 #  tempmem = locals()
 #  mem = sys.getsizeof(tempmem) 
+  print "***FACTORISATION ITERATIONS:***  ", it
+  print "***ERROR THERE:***   ", err
   mem = U.nbytes+V.nbytes+Lambda.nbytes+Id.nbytes+Vg.nbytes+Lg.nbytes+VV.nbytes+Z.nbytes+Lv.nbytes+Uv.nbytes+t1.nbytes+t2.nbytes+a.nbytes
   #print(U.nbytes,V.nbytes,Lambda.nbytes,Id.nbytes,Vg.nbytes,Lg.nbytes,VV.nbytes,Z.nbytes,Lv.nbytes,Uv.nbytes,t1.nbytes,t2.nbytes,sys.getsizeof(L),sys.getsizeof([W]))
   return (U,V, mem) 
@@ -372,19 +374,19 @@ class TestBLC(unittest.TestCase):
      Ut, Vt, memt = ls_groups(Rtilde, d, 0.0000001,10, Lambda,a)
      print "R\n", R
      print "Rsampled\n", Rsampled
-     print "P\n", P
-     print "Lambda\n", Lambda
+    # print "P\n", P
+    # print "Lambda\n", Lambda
      print "Rtilde\n", Rtilde
      print "Utilde\n", Ut
      print "Vtilde\n", Vt
      print "ls_groups\n", np.dot(Ut.T, Vt)
-     print "ls\n", np.dot(U.T, V)
+    # print "ls\n", np.dot(U.T, V)
      #factorization error - compare elements of R_sampled - R_tilde
      #prediction error - compare elements of R_missing - R_tilde'
      e = rms(R,U,V)
      e_groups = rms(Rtilde,Ut,Vt)
-     print "error is: ", e
-     print "group error is: ", e_groups     
+   #  print "error is: ", e
+   #  print "group error is: ", e_groups     
     # self.assertTrue(e<1e-3,'Accuracy is '+ str(e)) # is solution accurate ? ** change this: it shouldn't fail if accuracy is low (or remove it)
 
   def test_accuracy(self):

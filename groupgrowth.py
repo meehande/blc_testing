@@ -99,8 +99,24 @@ while ( (tries < n_tries) or (groups_age < group_convergence) ):
         groups_age += 1
         #print "INCREASE GROUP AGE"
         
-    
-        
+#delete empty groups to clean up...
+groups_used = P.sum(axis = 1)
+P = P[groups_used!=0] #get rid of empty groups
+p,n = P.shape 
+Rtilde = Rtilde[groups_used!=0]#pxm
+Lambda = Lambda[:, groups_used!=0]#mxp  
+Ut = Ut[:,groups_used!=0] 
+UV = np.dot(Ut.T, Vt)
+
+print "number of iterations: ", tries
+print "P\n", P
+print "Rtilde\n", Rtilde
+print "Ut\n", Ut
+print "Vt\n", Vt
+print "UV\n", UV
+print "lambda\n", Lambda
+print "groups age\n", groups_age 
+print "error\n", blc.rms(Rtilde, Ut, Vt)       
         
         
         

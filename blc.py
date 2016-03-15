@@ -357,8 +357,8 @@ def rms(R,U,V): # metric on the missing one
   
   if totalsampled:
       UV = np.dot(U.T,V)
-      existing = (R!=0) & (UV!=0) #**Q:do we care about zeros in UV?? 
-      totalsampled = np.sum(existing)
+      existing = (R!=0) #& (UV!=0) #**Q:do we care about zeros in UV?? 
+      #totalsampled = np.sum(existing)
       e = np.sum( (UV[existing]-R[existing])**2 )/totalsampled
   else:
       e = 0

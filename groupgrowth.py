@@ -46,27 +46,27 @@ COMPARE TO MATLAB DIRECTLY - VERIFY IT WORKS CORRECTLY!
 
 n = 15 #num users - initial parameter of R
 m = 10 #num items - initial parameter of R
-d = 2 #latent features
-p = 1 #num groups... start with this - this will be pruned/learned 
+d = 3 #latent features
+p = 4 #num groups... start with this - this will be pruned/learned 
 
 maxiter_main = 2
 tries = 0
 n_tries = 50
-group_convergence = 5 #age groups need to reach before convergence met
+group_convergence = 3 #age groups need to reach before convergence met
 existing_groups_prev = np.zeros(p)
 existing_groups_prev.fill(False)
 existing_groups_prev = np.ones((1,p), dtype=bool)
 groups_age = 0
 
 growth_frequency = 10 #num iterations between each group growth step
-R = blc.createR(n,m,d) #really this will be given - this is the recommendation system
+R = blc.createR(n,m,d,p) #really this will be given - this is the recommendation system
 (W,L,Rsampled,Rmissed, a) = blc.sampleR(R,0.3)  #sample to make sparse
 P = blc.createP(p,n) #create initial P - we don't know where users lie so this is arbitrary for now and will be learned
 #P = np.zeros((p,n))
 tolerance = 0.01 #error tolerance to be met for factorisation...
 
 #**make update method that updates all the things each round - ie rtilde, Lambda, R, etc...
-while ( (tries < n_tries) or (groups_age < group_convergence) ):
+while ( (tries < n_tries) and (groups_age < group_convergence) ):
     
     Rtilde, Lambda = blc.createRtilde(Rsampled,P)#avg rating per group for each item - pxm
    # Lambda = blc.createLambda(P,Rsampled)#users per group rating item m - pxm - 
@@ -113,7 +113,7 @@ print "P\n", P
 print "Rtilde\n", Rtilde
 print "Ut\n", Ut
 print "Vt\n", Vt
-print "UV\n", UV
+print "UV - prediction!\n", UV
 print "lambda\n", Lambda
 print "groups age\n", groups_age 
 print "error\n", blc.rms(Rtilde, Ut, Vt)       

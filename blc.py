@@ -104,11 +104,18 @@ def ls2(R,W,d,L):
   return (U,V)
 
 
-def createR(n,m,d):
+def createR2(n,m,d):
   # generate random user-item rating matrix
   Ustar = np.random.rand(d, n)
   Vstar = np.random.rand(d, m)
   return np.dot(Ustar.T,Vstar)
+
+def createR(n,m,d,p):
+    P = createP(p,n)#pxn
+    Utilde = np.random.rand(d,p)#dxp
+    V = np.random.rand(d,m)#dxm
+    R = np.dot(np.dot(P.T, Utilde.T), V)#nxm
+    return R
 
 
 def sampleR(R,density):
@@ -361,7 +368,7 @@ def rms(R,U,V): # metric on the missing one
 class TestBLC(unittest.TestCase):
 
   def accuracy(self,n,m,d,p):
-     R = createR(n,m,d)  # generate random user-item rating matrix
+     R = createR(n,m,d,p)  # generate random user-item rating matrix
      (W,L,Rsampled,Rmissed, a) = sampleR(R,0.3)  # sample from it **rho
      P = createP(p,n)
     # Lambda = createLambda(P,Rsampled)

@@ -46,9 +46,9 @@ for i in xrange(start,1):
     for n in [10]:#list(xrange(10,100,10)) + list(xrange(200,1000,100)):
       for m in [7]:#xrange(2,10,2):
         for d in [2]:#xrange(2,10,2):
-          R = blc.createR(n,m,d)  # generate random user-item rating matrix
+          R = blc.createR(n,m,d,p)  # generate random user-item rating matrix
           (W,L,Rsampled,Rmissing) = blc.sampleR(R,rho)
-          P = blc.createP(n,n)
+          P = blc.createP(p,n)
           Lambda = blc.createLambda(P,Rsampled)
           r = oc.minimal_als('R',Rsampled,'d',d,'maxiter',10,'fast',1,'octave',1,'p',n)
           oct_err = blc.rms(Rmissing,r.U,r.V)

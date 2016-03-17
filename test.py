@@ -27,7 +27,7 @@ import sys
 import pickle
 
 oc = oct2py.Oct2Py()
-oc.addpath('C:\Users\Deirdre Meehan\Desktop\FYP\MatLabOriginalFiles')
+oc.addpath('C:\Users\meeha\Desktop\FYP\MatLabOriginalFiles')
 results = pd.DataFrame(columns=['density','n','m','d','mem','time','octave mem','octave time','error','octave error','python mem'])
 
 if os.path.isfile('results.pkl') & os.path.isfile('status.pkl') :

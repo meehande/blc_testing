@@ -74,7 +74,7 @@ while ( (tries < n_tries) and (groups_age < group_convergence) ):
     Ut,Vt, memt = blc.ls_groups(Rtilde, d, tolerance, 10, Lambda, a) #factoristaion - groupwise
     #reallocate users to closest group
     for user in np.random.permutation(n):  
-        blc.findP(R,Rtilde,user,P)#this updates P to put user in closest group by comparing R and Rtilde
+        blc.findP(Rsampled,Rtilde,user,P)#this updates P to put user in closest group by comparing R and Rtilde
     #for privacy, would only need that users row of R**include this!!? - this can be done locally by user - embarrassingly parallel
     if(not(tries%growth_frequency)):#update num groups and associated parameters
         P, Ut = blc.train_groups(P,Ut)#cull unused groups and then double them

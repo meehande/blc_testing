@@ -29,9 +29,9 @@ TEST: CREATE R FROM RTILDE TO TEST IF SAME GROUPS CONVERGE...
 """
 Rtilde_test = np.zeros((p,m))
 
-Rtilde_test[0,:] = [1,2,3,4,5,6]
-Rtilde_test[1,:] = [6,6,6,6,0,0]
-Rtilde_test[2,:] = [0,0,1,0,0,1]
+Rtilde_test[0,:] = [1,1,1,5,5,5]
+Rtilde_test[1,:] = [1,1,0,5,5,0]
+Rtilde_test[2,:] = [0,1,1,0,5,5]
 
 R, Lambda, P = blc.RfromRtilde(Rtilde_test, 0.001)
 #(W,L,Rsampled,Rmissed, a) = blc.sampleR(R,0.3)  #sample to make sparse

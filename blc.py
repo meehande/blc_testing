@@ -250,8 +250,8 @@ def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a):
 # ** use np.sqrt(np.sum( (np.dot(U.T,V)-R)**2 )/numel(W))
 #  tempmem = locals()
 #  mem = sys.getsizeof(tempmem) 
-  print "***FACTORISATION ITERATIONS:***  ", it
-  print "***ERROR THERE:***   ", err
+ # print "***FACTORISATION ITERATIONS:***  ", it
+ #+ print "***ERROR THERE:***   ", err
   mem = U.nbytes+V.nbytes+Lambda.nbytes+Id.nbytes+Vg.nbytes+Lg.nbytes+VV.nbytes+Z.nbytes+Lv.nbytes+Uv.nbytes+t1.nbytes+t2.nbytes+a.nbytes
   #print(U.nbytes,V.nbytes,Lambda.nbytes,Id.nbytes,Vg.nbytes,Lg.nbytes,VV.nbytes,Z.nbytes,Lv.nbytes,Uv.nbytes,t1.nbytes,t2.nbytes,sys.getsizeof(L),sys.getsizeof([W]))
   return (U,V, mem) 

@@ -11,7 +11,7 @@ import os
 p=3
 m=6
 n=9
-d=3
+d=2
 
 maxiter_main = 2
 tries = 0

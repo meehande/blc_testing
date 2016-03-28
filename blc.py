@@ -156,7 +156,7 @@ def sampleR(R,density):
 def createLambda(P,R):
     n,m = R.shape
     p,n = P.shape
-    a = R>0
+    a = R!=0
     Lambda = np.zeros((m,p))
     for i in xrange(m):
         Lambda[i,:]= P[:,a[:,i]].sum(axis=1)

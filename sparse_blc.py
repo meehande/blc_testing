@@ -7,7 +7,6 @@ Created on Thu Mar 24 13:25:26 2016
 import numpy as np
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsl
-import blc
 """
 SPARSE VERSION OF BLC.PY
 
@@ -64,8 +63,11 @@ def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a):
   mem = 0#U.nbytes+V.nbytes+Lambda.nbytes+Id.nbytes+Vg.nbytes+Lg.nbytes+VV.nbytes+Z.nbytes+Lv.nbytes+Uv.nbytes+t1.nbytes+t2.nbytes+a.nbytes
   return (U,V, mem) 
   
-  
-  
+"""
+GET FACTORISATION OR PREDICTION ERROR DEPENDING ON R GIVEN
+-RSAMPLED FOR FACTORISATION ERROR
+-RMISSING FOR PREDICTION ERROR
+"""  
 def rms(R,U,V): # sparse rms calculation
   totalsampled = sps.csr_matrix.sum(R!=0)#number of non zeros - num of actual ratings that exist that we need
   
@@ -76,3 +78,56 @@ def rms(R,U,V): # sparse rms calculation
   else:
       e = 0
   return np.sqrt(e)
+  
+"""
+CREATE GROUP RATING MATRIX RTILDE 
+FROM USER RATING MATRIX R
+AND GROUP ORGANISATION MATRIX P  
+"""  
+def createRtilde(R, P):
+    p,n = P.shape
+    n,m = R.shape
+    Rhat = sps.lil_matrix((p,m))
+    #Rhat[:] = np.nan
+    #Rhat = pxm = sum of ratings for each item for all members of a group
+    Rtilde = sps.lil_matrix((p,m))
+    Lambda = createLambda(P,R)
+    #Lambda = mxp = #users per group who have rated item m
+    for item in xrange(m):#for each item
+        #turn R = nxm into Rhat = pxm - sum users from same group     
+        Rhat[:,item] = P.dot(R[:,item])#Rhat(:,v) = P*Rv
+    #Rhat = aggregate of ratings per item for each group
+        invLambda = sps.diags(Lambda[item,:].data[0])#make diagonal of #users per group who rated item
+        invLambda.data = 1/invLambda.data
+        Rtilde[:,item] = invLambda.dot(Rhat[:,item])
+    return Rtilde, Lambda#Rtilde = pxm aggregation of R for each user
+""" 
+LAMBDA = MXP
+NUMBER OF USERS IN GROUP P WHO RATED ITEM M
+"""       
+def createLambda(P,R):
+    n,m = R.shape
+    p,n = P.shape
+    a = R!=0
+    Lambda = sps.lil_matrix((m,p))
+    for i in xrange(m):
+        Lambda[i,:]= P[:,a[:,i].data].sum(axis=1).T
+    return Lambda
+    
+def createP(p, n):
+    P = sps.lil_matrix((p,n))
+    for user in xrange(n):
+        group = np.random.random_integers(0, p-1) #returns random num between 0, p-1 inclusive
+        P[group, user] = 1
+    return P
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  

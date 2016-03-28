@@ -336,8 +336,8 @@ update user's group by seeing which group's ratings
 are closest
 """
 def findP(R, Rtilde, user, P): #**make it work for empty param P given as input
-    a = R>0
-    distance = np.sum(np.square(R[user, a[user, :]] - Rtilde[:,a[user,:]]),1) # column of distance from user to each group
+    a = R!=0
+    distance = np.sum(np.square(R[user, a[user, :]] - Rtilde[:,a[user,:]]),1) # column of distance from user to each group - sum each row (1xp)
     perm = np.random.permutation(distance.size) # random permutation of indices in distance
     index = np.argmin(distance[perm])
     index = perm[index]

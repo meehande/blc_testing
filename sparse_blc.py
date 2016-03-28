@@ -101,6 +101,7 @@ def createRtilde(R, P):
         invLambda.data = 1/invLambda.data
         Rtilde[:,item] = invLambda.dot(Rhat[:,item])
     return Rtilde, Lambda#Rtilde = pxm aggregation of R for each user
+    
 """ 
 LAMBDA = MXP
 NUMBER OF USERS IN GROUP P WHO RATED ITEM M
@@ -114,6 +115,10 @@ def createLambda(P,R):
         Lambda[i,:]= P[:,a[:,i].data].sum(axis=1).T
     return Lambda
     
+"""
+P = GROUP STRUCTURE = NXP
+PUT EVERY USER IN A RANDOM GROUP - DIAGONAL MATRIX?
+"""    
 def createP(p, n):
     P = sps.lil_matrix((p,n))
     for user in xrange(n):
@@ -122,6 +127,68 @@ def createP(p, n):
     return P
   
   
+"""
+euclidean distance between matrices A, B
+dist = sqrt ( ||A||^2 + ||B||^2 - 2*A.B )
+- from matlab implemetation by Roland Bunschoten in original matlab code
+"""  
+def distance(a,b):
+    aa = a.power(2).sum(0)#square all elements, sum each column
+    bb = b.power(2).sum(0)
+    ab = a.T.dot(b).todense()
+    #the above all return matrices-same as non sparse implementation so don't use sparse from here!
+    return np.sqrt(abs(np.column_stack([aa]*bb.shape[0])+np.vstack([bb]*aa.shape[0])-2*ab))
+    #below didn't return consistent results with non-sparse eqv
+    #sps.csr_matrix(abs(sps.vstack([aa]*bb.shape[0]).T + sps.vstack([bb]*aa.shape[0]) - 2*ab)).sqrt()
+    
+    
+"""
+PRUNE GROUPS:
+1.find unused groups and get rid of them 
+2.double number of existing groups 
+3.return updated P and Ut
+"""
+def train_groups(P, Ut): #expand tree in matlab code!
+    distgroups = 0.2
+    groups_used = P.sum(axis = 1).T#sum each row - matrix result with each row = #members of group - 1xp
+    groups_used = np.asarray(groups_used)[0]
+    if groups_used.any():
+        P = P[groups_used!=0] #get rid of empty groups
+        Ut = Ut[:,groups_used!=0]
+    
+    p,n = P.shape # culled P shape needed
+    tempk =  np.triu(distance(Ut,Ut)*(1-np.eye(p)))#this is not sparse!! (distance returns dense MATRIX)
+    tempk[tempk==0] = np.inf #tempk = pxp - p is likely small enough for non sparse (<<<100)
+    tempm = tempk.min()
+    if (tempm == np.inf):
+        tempm = 0.1 #degenerate case - only one group - distance would be infinite so fix std deviation val
+    #set values in new groups
+    Ut = sps.hstack((Ut,  sps.lil_matrix(Ut.shape))).tolil()#double Ut - num groups
+    P = sps.vstack((P, sps.lil_matrix(P.shape))).tolil()#double num groups **should we just use createP??
+    newd, newp = Ut.shape #shape of ut with groups culled and then doubled
+    for i in range(p,newp):
+        Ut[:,i] = sps.lil_matrix(np.random.multivariate_normal(np.asarray(Ut.todense())[:,i], (tempm*distgroups)**2/newd*np.eye(newd))).T
+    return P,Ut
+    
+    
+"""
+LEARN GROUPS
+update (one) user's group by seeing which group's ratings
+are closest
+"""
+def findP(R, Rtilde, user, P): #**make it work for empty param P given as input
+    a = R!=0#csr format
+    distance = (sps.vstack(([R[user,a[user,:].data]]*Rtilde.shape[0] )) - Rtilde[:,a[user,:].data]).power(2).sum(1)# column of distance from user to each group
+    #distance=matrix                      #1xm - pxm    
+    perm = np.random.permutation(distance.size) # random permutation of indices in distance )array_
+    index = np.argmin(distance[perm])
+    index = perm[index]
+    P[:,user] = 0
+    P[index, user] = 1 #P is passed by reference
+    #return P
+
+    
+   
   
   
   

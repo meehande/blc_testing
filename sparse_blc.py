@@ -22,7 +22,6 @@ def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a):
   #(n,m) = R.shape
   p,m = Rtilde.shape
   sigma = np.finfo(float).eps #scalar
-  Id = np.identity(d)
   Id = sps.eye(d)#sparse identity
    
   V = sps.rand(d, m, density = 0.5)#this gives COO sparse formation
@@ -40,20 +39,20 @@ def ls_groups(Rtilde,d,tolerance,maxiter, Lambda, a):
         Z = Rtilde[g,a[:,g].data].multiply(Lg.data)
         Z = sps.csr_matrix(Z)
         try:
-          U[:,g] = np.expand_dims(spsl.lsqr(sigma*Id+VV, Vg.dot(Z.data))[0], axis=1) # dx1
+          U[:,g] = np.expand_dims(spsl.lsmr(sigma*Id+VV, Vg.dot(Z.data))[0], axis=1) # dx1
         except:
           print('Ill conditioned matrix, fix that please in some way..')
         
     for v in xrange(m): 
       #pdb.set_trace()
       if a[v, :].nnz>0:
-        Lv = sps.diags(Lambda.tolil()[v,a[v,:].data].data[0])  # this is n x n, ok if n is #groups and small-ish **either this has to be made sparse or find another way... HUGE
+        Lv = sps.diags(np.asarray(Lambda[v,a[v,:].data].todense())[0])  # this is n x n, ok if n is #groups and small-ish **either this has to be made sparse or find another way... HUGE
         Uv = U[:,a[v,:].data]  # this is d x n
         t1 = Uv.dot(Lv.dot(Uv.T)) + sigma*Id  # this is d x d
         t2 = Uv.dot(Lv.dot(Rtilde[a[v,:].data,v])) # RH multiply gives n x 1, LH d x 1
         t2 = t2.toarray()
         try:
-          V[:,v]=np.expand_dims(spsl.lsqr(t1,t2)[0], axis=1)
+          V[:,v]=np.expand_dims(spsl.lsmr(t1,t2)[0], axis=1)
         except:
           print('Ill conditioned matrix, fix that please in some way..')
           #pdb.set_trace()
@@ -97,9 +96,13 @@ def createRtilde(R, P):
         #turn R = nxm into Rhat = pxm - sum users from same group     
         Rhat[:,item] = P.dot(R[:,item])#Rhat(:,v) = P*Rv
     #Rhat = aggregate of ratings per item for each group
-        invLambda = sps.diags(Lambda[item,:].data[0])#make diagonal of #users per group who rated item
+        invLambda = Lambda[item,:].data[0] #list of that row of lambda
+        while len(invLambda) < p:
+            invLambda.append(0)
+        invLambda = sps.diags(invLambda)#make diagonal of #users per group who rated item
         invLambda.data = 1/invLambda.data
         Rtilde[:,item] = invLambda.dot(Rhat[:,item])
+    Rtilde[Rtilde==np.inf] = 0
     return Rtilde, Lambda#Rtilde = pxm aggregation of R for each user
     
 """ 

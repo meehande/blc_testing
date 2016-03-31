@@ -363,6 +363,40 @@ def rms(R,U,V): # metric on the missing one
   else:
       e = 0
   return np.sqrt(e)
+  
+  
+"""
+RECOMMENDATION GENERATION (private)
+- Ru = vector of ratings from user - 1xm
+- Utilde = dxp
+- V = dxm
+- g = group user is in 
+recommendation:
+x = [Ru(items rated) Utilde(user's group).T] [I(items rated) 0] [V(items rated) Id].T
+                                             [      0      wId]
+    (1/sigma^2Id + [V(items rated) Id] [I(items rated) 0] [V(items rated) Id].T )^-1
+                                       [      0      wId]
+recommendation = xV                                      
+"""
+#**to do: change from m to mu (only compute on items rated by user)
+def recommend(Ru, Utilde, V, g):
+    d, m = V.shape
+    w = 1
+    sigma = 1.0
+    RuUt = np.concatenate((Ru, np.expand_dims(Utilde[:,g].T, 0)),1)# [Ru Utg^T] - (1 x mu+d)
+    Iv = np.eye(m)
+    Id = np.eye(d)
+    IvId = np.concatenate((np.concatenate((Iv, np.zeros((m,d))),1), np.concatenate((np.zeros((d,m)), w*Id), 1)))# (m+d x m+d)
+    #VvId = np.concatenate((np.expand_dims(V[:,g],1), Id),1)
+    VvId = np.concatenate((V, Id),1)   
+    t0 = np.dot(RuUt, np.dot(IvId, VvId.T))#this s 1xd
+    t1 = np.linalg.inv(1.0/sigma**2 * Id + np.dot(VvId, np.dot(IvId, VvId.T))) #this is dxd - square mat so inverse calculable
+    x = np.dot(t0,t1)#this is 1xd
+    return np.dot(x,V)#this will be 1xm
+    
+    
+    
+    
 
 ############################
 class TestBLC(unittest.TestCase):

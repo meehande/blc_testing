@@ -7,23 +7,22 @@ Created on Thu Mar 31 17:38:49 2016
 
 from Tkinter import *
 import demo_factorise
-
+import blc
+import numpy as np
 class Application(Frame):
     def say_hi(self):
-        print "hi there, everyone!"
-    
+        print "hi there, everyone!"  
     
     def factorise(self):
         #call test that does factorisation with each dataset...
-        
         if self.datasetoption.get() == "real":
-            print "real factorize..."
+            print "real factorize..."    
             return
         if self.datasetoption.get() == "theoretical":
             print "theoretical.."
-            ferr_temp, perr_temp = demo_factorise.demofactorise(0)
+            ferr_temp, perr_temp, self.Rsampled, self.Rmissing, self.Rtilde, self.Ut, self.Vt, self.P = demo_factorise.demofactorise(0)
             self.ferr.set(ferr_temp)
-            self.perr.set(perr_temp)            
+            self.perr.set(perr_temp)         
             return
         else:
             print "no input"
@@ -75,24 +74,26 @@ class Application(Frame):
 #-------CHOOSE USER FOR RECOMMENDATION--------------------------------------------#
         self.ChooseUser = Entry(frame1)#**Add "command" attribute to add function... - put validation on input here
         self.ChooseUser.pack(side="left")
+        self.chosenuser.set(self.ChooseUser.get())
+        #print self.ChooseUser.get()
 #-------GEN RECOMMENDATION BUTTON------------------------------------------------------#        
-        self.FACTORISE = Button(frame1)
-        self.FACTORISE["text"] = "Generate recommendation"
-        self.FACTORISE.pack({"side": "left"})
+        self.RECOMMEND = Button(frame1)
+        self.RECOMMEND["text"] = "Generate recommendation"
+        self.RECOMMEND["command"] = self.recommendation
+        self.RECOMMEND.pack({"side": "left"})
         #self.FACTORISE["command"] = some function to do the things
 #http://python-textbok.readthedocs.org/en/latest/Introduction_to_GUI_Programming.html
 
     def __init__(self, master=None):
         Frame.__init__(self, master)
         self.ferr = IntVar()
-        self.perr = IntVar()   
+        self.perr = IntVar()
+        self.chosenuser = StringVar()
         self.ferr.set(0)
         self.perr.set(0)
+        self.chosenuser.set("yass")
         self.pack()
         self.createWidgets()
-        
-
-    
     def validate(self, new_text):
         if not new_text: # the field is being cleared
             self.entered_number = 0
@@ -102,7 +103,28 @@ class Application(Frame):
             return True
         except ValueError:
             return False
+            
+    def recommendation(self):
+        print "herey"
+        self.chosenuser.set(self.ChooseUser.get())
+        user = self.chosenuser.get()
+        print "user\n", user
+        user = int(user)
+        group = np.argmax(self.P[:,user])#group the chosen user is in
+        self.rec_vector = blc.recommend(self.Rsampled[user,:], self.Ut, self.Vt, group)
+        print "recommendation vector\n",rec_vector
+        xV = np.dot(self.rec_vector, self.Vt)#this is the predicted UV from that user - gives the recommendation
+        Ru = np.expand_dims(self.Rsampled[user, :],0)
+        perr = blc.rms(Ru, self.rec_vector.T, self.Vt)
+        print "error in rec\n", perr        
+        rated = Ru!=0
+        if not(rated.all()):
+            xV[rated] = np.nan
+            recommend_item = np.nanargmax(xV)
+            print "recommendation\n", recommend_item
         
+        return
+           
 
 root = Tk()
 app = Application(master=root)

@@ -359,6 +359,8 @@ def rms(R,U,V): # metric on the missing one
       UV = np.dot(U.T,V)
       existing = (R!=0) #& (UV!=0) #**Q:do we care about zeros in UV?? 
       #totalsampled = np.sum(existing)
+      if len(existing.shape) ==1:
+          existing = np.expand_dims(existing, 0)
       e = np.sum( (UV[existing]-R[existing])**2 )/totalsampled
   else:
       e = 0
@@ -383,19 +385,20 @@ def recommend(Ru, Utilde, V, g):
     d, m = V.shape
     w = 1
     sigma = 1.0
+    if len(Ru.shape) == 1:
+        Ru = np.expand_dims(Ru, 0)
     RuUt = np.concatenate((Ru, np.expand_dims(Utilde[:,g].T, 0)),1)# [Ru Utg^T] - (1 x mu+d)
     Iv = np.eye(m)
     Id = np.eye(d)
     IvId = np.concatenate((np.concatenate((Iv, np.zeros((m,d))),1), np.concatenate((np.zeros((d,m)), w*Id), 1)))# (m+d x m+d)
     #VvId = np.concatenate((np.expand_dims(V[:,g],1), Id),1)
-    VvId = np.concatenate((V, Id),1)   
+    VvId = np.concatenate((V, Id),1)# (d x mu+d)
     t0 = np.dot(RuUt, np.dot(IvId, VvId.T))#this s 1xd
     t1 = np.linalg.inv(1.0/sigma**2 * Id + np.dot(VvId, np.dot(IvId, VvId.T))) #this is dxd - square mat so inverse calculable
     x = np.dot(t0,t1)#this is 1xd
-    return np.dot(x,V)#this will be 1xm
+    #xV = np.dot(x,V)#this is 1xm
     
-    
-    
+    return x# recommendation generated from xV - this will be 1xm
     
 
 ############################

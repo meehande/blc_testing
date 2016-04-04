@@ -32,7 +32,10 @@ existing_groups_prev = np.ones((1,p), dtype=bool)
 groups_age = 0
 
 growth_frequency = 10 #num iterations between each group growth step
-R = parse.readR('../ml-100k/', 'u1.test', '\t') #really this will be given - this is the recommendation system
+path = '../ml-100k/'
+filename = 'u1.base'
+delimiter = '\t'
+R = parse.readR(path, filename, delimiter) #really this will be given - this is the recommendation system
 n,m = R.shape
 (W,L,Rsampled,Rmissed, a) = blc.sampleR(R,1)  #sample to make sparse
 P = blc.createP(p,n) #create initial P - we don't know where users lie so this is arbitrary for now and will be learned
@@ -54,6 +57,7 @@ while ( (tries < n_tries) and (groups_age < group_convergence) ):
         P, Ut = blc.train_groups(P,Ut)#cull unused groups and then double them
         print "UPDATING"        
         #Rtilde and lambda will be updated on the beginning of the next iteration...
+    """
     print "iteration number: ", tries
     print "P\n", P
     print "Rtilde\n", Rtilde
@@ -61,6 +65,7 @@ while ( (tries < n_tries) and (groups_age < group_convergence) ):
     print "Vt\n", Vt
     print "lambda\n", Lambda
     print "groups age\n", groups_age
+    """
     tries +=1
     #group convergence
     existing_groups = np.sum(a,0) > 0 #find which groups are empty/full
@@ -81,7 +86,10 @@ Rtilde = Rtilde[groups_used!=0]#pxm
 Lambda = Lambda[:, groups_used!=0]#mxp  
 Ut = Ut[:,groups_used!=0] 
 UV = np.dot(Ut.T, Vt)
-
+n,m = R.shape
+filename = "u1.test"
+Rtest = parse.readRdefiniteSize(path, filename, delimiter, n, m)
+Rtilde_testp, lam = blc.createRtilde(Rtest, P)
 print "number of iterations: ", tries
 print "P\n", P
 print "Rtilde\n", Rtilde
@@ -90,7 +98,31 @@ print "Vt\n", Vt
 print "UV - prediction!\n", UV
 print "lambda\n", Lambda
 print "groups age\n", groups_age 
-print "error\n", blc.rms(Rtilde, Ut, Vt)       
+print "factorisation error\n", blc.rms(Rtilde, Ut, Vt)       
+print "prediction error\n", blc.rms(Rtilde_testp, Ut, Vt)
+
+print "RECOMMENDATION!!~~~~~~~~~~~~~~~~~~~~"
+user = np.random.randint(0,n)
+group = np.argmax(P[:,user])#group the chosen user is in
+print "user", user
+print "user ratings\n", R[user,:]
+print "group", group
+print "group ratings:\n", UV[group,:]
+rec_vector = blc.recommend(R[user,:], Ut, Vt, group)
+print "recommendation vector\n",rec_vector
+xV = np.dot(rec_vector, Vt)#this is the predicted UV from that user - gives the recommendation
+Ru = np.expand_dims(R[user, :],0)
+perr = blc.rms(Ru, rec_vector.T, Vt)
+print "error in rec\n", perr
+  
+rated = Ru!=0
+
+if not(rated.all()):#
+    xV[rated] = np.nan
+    recommend_item = np.nanargmax(xV)
+    print "recommendation\n", recommend_item
+#results.to_pickle('Rgroups_test_demo.pkl')
+print "Done"
         
         
         

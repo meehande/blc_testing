@@ -91,5 +91,7 @@ def demofactorise(dataset):
     factorisation_error = blc.rms(Rtilde, Ut, Vt)#compare known elements used in factorization to factored results 
     prediction_error = blc.rms(Rtilde_missing, Ut, Vt)#compare missing elements (not given to recommender) to predicted values 
     
-    return factorisation_error, prediction_error
+    return factorisation_error, prediction_error, Rsampled, Rmissing, Rtilde, Ut, Vt, P
+    
+
     

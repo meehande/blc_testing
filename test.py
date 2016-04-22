@@ -28,13 +28,14 @@ import pickle
 
 oc = oct2py.Oct2Py()
 oc.addpath('C:\Users\meeha\Desktop\FYP\MatLabOriginalFiles')
+
 results = pd.DataFrame(columns=['density','n','m','d','mem','time','octave mem','octave time','error','octave error','python mem'])
 
-if os.path.isfile('results.pkl') & os.path.isfile('status.pkl') :
+if os.path.isfile('results1.pkl') & os.path.isfile('status1.pkl') :
   print('Results already exists in this directory.. appending...') 
-  with open('status.pkl','rb') as f:
+  with open('status1.pkl','rb') as f:
     start = pickle.load(f) 
-  results = pd.read_pickle('results.pkl')
+  results = pd.read_pickle('results1.pkl')
   input('Press Enter to continue...')
 else:
   start = 0
@@ -79,9 +80,9 @@ for i in xrange(start,1):
           print(mem/1048576.0) # this is the memory in Mbytes of the variables we decided to measure
           print('-----------')
           results = results.append(pd.DataFrame({'density':rho,'n':n,'m':m,'d':d,'mem':mem,'time':run_time,'octave mem':r.mem,'octave time':r.tim,'error':blc_err,'octave error':oct_err,'python mem':python_mem},index=[0]),ignore_index=True)
-  results.to_pickle('results.pkl')
+  results.to_pickle('results1.pkl')
   #print 'here'
-  with open('status.pkl', 'w') as f:
+  with open('status1.pkl', 'w') as f:
     pickle.dump(i+1, f)
   #f = open('iteration', 'w')
   #f.write(str(i+1))
@@ -117,3 +118,23 @@ results[(results['n'].isin([900])) & ( results['m'].isin([8]))].boxplot(column=[
 #store = HDFStore('experiment.h5')
 #store['results'] = results # save 
 # and store['results']  to load
+
+"""
+FORMATTING THINGS:
+LEGEND TO SIDE -
+fig.legend( bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+LEGEND ON TOP
+fig.legend( bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+           ncol=2, mode="expand", borderaxespad=0.)
+LEGEND SIZING
+fig.legend(fontsize=10,loc='center left', labelspacing=0.2)
+RELABEL 
+lines, labels = fig.get_legend_handles_labels()
+fig.legend(lines, nlabels, loc='best')
+MAKE LABEL NOT APPEAR OUTSIDE GRAPH + LEGEND UNDER GRAPH
+lgd = fig.legend(lines, nlabels, loc='upper center', bbox_to_anchor=(0.5,-0.1))#legend top - not new labels
+Llgd = fig.legend(lines, nlabels, bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.) # legend to side
+fig.get_figure().savefig('samplefigure', bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+
+"""

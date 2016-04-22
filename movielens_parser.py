@@ -31,7 +31,7 @@ def readR(path, filename, delimiter):
     m = max(movie_ids)
     n = max(user_ids)
     print "n, m: ", n, "  ", m
-    R = np.zeros((n+1,m+1))
+    R = np.zeros((n+1,m+1), np.float16)
     #float16 is way smaller - float 64 R was 5,896,880; float16 was 1,474,304 (bytes)
     
     f.seek(0)#go back to start of file

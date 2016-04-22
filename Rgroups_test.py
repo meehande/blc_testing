@@ -29,8 +29,8 @@ growth_frequency = 10 #num iterations between each group growth step
 TEST: CREATE R WITH GROUPS TO TEST IF SAME GROUPS CONVERGE...
 """
 results = pd.DataFrame(columns=['density', 'zero_elements', 'factor_error', 'predict_error','d','n','m','p'])
-if os.path.isfile('Rgroups_test_demo.pkl'):
-    results = pd.read_pickle('Rgroups_test_demo.pkl')
+if os.path.isfile('Rgroups_test_demo1.pkl'):
+    results = pd.read_pickle('Rgroups_test_demo1.pkl')
 
 R_groups = np.zeros((n,m))
 
@@ -138,8 +138,10 @@ POSSIBLE TEST/RESULTS:
 **LEARN GROUPS INITIALLY RATHER THAN CREATING RANDOM P?
 **COMPARE EFFICIENCY OF FINDP AND CREATEP TO KNOW WHICH IS BETTER TO USE TO BEGIN (CREATEP SHOULD BE FASTER BECAUSE NO LOOP FOR EACH USER)
 """  
+
+#results.groupby('density')[['predict_error','factor_error']].describe()
     
-        
+#look at multi indexing to get meAN AND MEDIAN OR WHATEVER...
         
         
         

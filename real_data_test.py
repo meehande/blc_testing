@@ -112,20 +112,21 @@ rec_vector = blc.recommend(R[user,:], Ut, Vt, group)
 print "recommendation vector\n",rec_vector
 xV = np.dot(rec_vector, Vt)#this is the predicted UV from that user - gives the recommendation
 Ru = np.expand_dims(R[user, :],0)
-perr = blc.rms(Ru, rec_vector.T, Vt)
-print "error in rec\n", perr
+ferr = blc.rms(Ru, rec_vector.T, Vt)
+print "factorisation group error in rec\n", ferr#**how should I desrcibe this error in a name??
   
 rated = Ru!=0
-
+"""
+xV_copy = xV
 if not(rated.all()):#
-    xV[rated] = np.nan
+    xV_copy[rated] = np.nan
     recommend_item = np.nanargmax(xV)
-    print "recommendation\n", recommend_item
+    print "recommendation: item id\n", recommend_item
+"""
 #results.to_pickle('Rgroups_test_demo.pkl')
 print "Done"
         
-        
-        
+#**output items of user observed compared to corresponding items in xV    
         
         
         
